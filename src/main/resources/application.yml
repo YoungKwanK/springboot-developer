@@ -11,6 +11,13 @@ spring:
         format_sql: true
 
     defer-datasource-initialization: true # 테이블 생성 후에 data.sql 실행
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 55283454538-t0nji0s4hr5c8hanj9t38646jdnqfpij.apps.googleusercontent.com
+            client-secret: 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
 jwt:
   issuer: ajufresh@gmail.com
   secret_key: study-springboot
