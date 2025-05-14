@@ -2,9 +2,12 @@ package Springbootdeveloper.service;
 
 import Springbootdeveloper.config.error.exception.ArticleNotFoundException;
 import Springbootdeveloper.domain.Article;
+import Springbootdeveloper.domain.Comment;
 import Springbootdeveloper.dto.AddArticleRequest;
+import Springbootdeveloper.dto.AddCommentRequest;
 import Springbootdeveloper.dto.UpdateArticleRequest;
 import Springbootdeveloper.repository.BlogRepository;
+import Springbootdeveloper.repository.CommentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -17,6 +20,7 @@ import java.util.List;
 public class BlogService {
 
     private final BlogRepository blogRepository;
+    private final CommentRepository commentRepository;
 
     //블로그 글 추가 메서드
     public Article save(AddArticleRequest request, String userName) {
@@ -57,5 +61,12 @@ public class BlogService {
         if(!article.getAuthor().equals(userName)){
             throw new IllegalArgumentException("not authorized");
         }
+    }
+
+    public Comment addComment(AddCommentRequest request, String userName) {
+        Article article = blogRepository.findById(request.getArticleId())
+                .orElseThrow(()-> new IllegalArgumentException("not found : " + request.getArticleId()));
+
+        return commentRepository.save(request.toEntity(userName, article));
     }
 }

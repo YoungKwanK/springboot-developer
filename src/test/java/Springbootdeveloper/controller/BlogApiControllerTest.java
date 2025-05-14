@@ -2,10 +2,13 @@ package Springbootdeveloper.controller;
 
 import Springbootdeveloper.config.error.ErrorCode;
 import Springbootdeveloper.domain.Article;
+import Springbootdeveloper.domain.Comment;
 import Springbootdeveloper.domain.User;
 import Springbootdeveloper.dto.AddArticleRequest;
+import Springbootdeveloper.dto.AddCommentRequest;
 import Springbootdeveloper.dto.UpdateArticleRequest;
 import Springbootdeveloper.repository.BlogRepository;
+import Springbootdeveloper.repository.CommentRepository;
 import Springbootdeveloper.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.javafaker.Faker;
@@ -53,6 +56,9 @@ class BlogApiControllerTest {
     @Autowired
     UserRepository userRepository;
 
+    @Autowired
+    CommentRepository commentRepository;
+
     User user;
 
     @BeforeEach // 테스트 실행 전 실행하는 메서드
@@ -60,6 +66,7 @@ class BlogApiControllerTest {
         this.mockMvc = MockMvcBuilders.webAppContextSetup(context)
                 .build();
         blogRepository.deleteAll();
+        commentRepository.deleteAll();
     }
 
     @BeforeEach
@@ -267,6 +274,37 @@ class BlogApiControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value(ErrorCode.ARTICLE_NOT_FOUND.getMessage()))
                 .andExpect(jsonPath("$.code").value(ErrorCode.ARTICLE_NOT_FOUND.getCode()));
+    }
+
+    @DisplayName("addComment: 댓글 추가에 성공한다.")
+    @Test
+    public void addComment() throws Exception{
+        //given
+        final String url = "/api/comments";
+
+        Article savedArticle = createDefaultArticle();
+        final Long articleId = savedArticle.getId();
+        final String content = "content";
+        final AddCommentRequest userRequest = new AddCommentRequest(articleId, content);
+        final String requestBody = objectMapper.writeValueAsString(userRequest);
+
+        Principal principal = Mockito.mock(Principal.class);
+        Mockito.when(principal.getName()).thenReturn("username");
+
+        //when
+        ResultActions result = mockMvc.perform(post(url)
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .principal(principal)
+                .content(requestBody));
+
+        //then
+        result.andExpect(status().isCreated());
+
+        List<Comment> comments = commentRepository.findAll();
+
+        assertThat(comments.size()).isEqualTo(1);
+        assertThat(comments.get(0).getArticle().getId()).isEqualTo(articleId);
+        assertThat(comments.get(0).getContent()).isEqualTo(content);
     }
 
     private Article createDefaultArticle() {
